@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using System;
 using System.Linq;
 using System.Windows.Controls;
+using System.Net.Http.Headers;
 
 namespace MyCarsWhishlist
 {
@@ -19,6 +20,9 @@ namespace MyCarsWhishlist
         private BindingList<CardModel> _content;
         private int[] ToDelete = new int[] { };
 
+        HttpClient client = new HttpClient();
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -26,8 +30,6 @@ namespace MyCarsWhishlist
 
         private async void Loader()
         {
-            using (var client = new HttpClient())
-            {
                 var responce = await client.GetAsync("http://localhost:54059/values");
                 responce.EnsureSuccessStatusCode();
 
@@ -35,40 +37,23 @@ namespace MyCarsWhishlist
                 {
                     _content = JsonConvert.DeserializeObject<BindingList<CardModel>>(await responce.Content.ReadAsStringAsync());
 
-                    if (_content == null)
-                        MessageBox.Show("cardDataList.json empty!");
-                    else
-                    _content.ListChanged += _content_ListChanged;
-
                     NewCards.ItemsSource = _content;
                 }
                 else
                 {
                     MessageBox.Show($"Responce : {responce.StatusCode} ");
                 }
-            }
         }
 
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            client.BaseAddress = new Uri("http://localhost:54059/");
+
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             Loader();
         }
-
-        private async void _content_ListChanged(object sender, ListChangedEventArgs e)
-        {
-            if (e.ListChangedType == ListChangedType.ItemAdded || e.ListChangedType == ListChangedType.ItemDeleted || e.ListChangedType == ListChangedType.ItemChanged)
-            {
-                using (var client = new HttpClient())
-                {
-                    HttpResponseMessage response = await client.PutAsJsonAsync("http://localhost:54059/values", _content);
-                    if (!response.IsSuccessStatusCode)
-                        MessageBox.Show($"Error: {response.StatusCode}");
-                }
-            }
-        }
-
-
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -107,16 +92,11 @@ namespace MyCarsWhishlist
             }
             else
             {
-
-                using (var client = new HttpClient())
-                {
-                    //_content.Add(card);
-                    string Name = NameBox.Text;
-                    string Photo = PicUpload.Source + "";
-                    HttpResponseMessage response = await client.PostAsJsonAsync("http://localhost:54059/values/" + Name, Photo);
-                    if (!response.IsSuccessStatusCode)
-                        MessageBox.Show($"Error: {response.StatusCode}");
-                }
+                string Name = NameBox.Text;
+                string Photo = PicUpload.Source + "";
+                HttpResponseMessage response = await client.PostAsJsonAsync("http://localhost:54059/values/" + Name, Photo);
+                if (!response.IsSuccessStatusCode)
+                    MessageBox.Show($"Error: {response.StatusCode}");
 
                 Loader();
             }
@@ -128,27 +108,20 @@ namespace MyCarsWhishlist
 
         private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
-
             var selectedId = (NewCards.Items.IndexOf(NewCards.SelectedItem)).ToString();
+            HttpResponseMessage response = await client.DeleteAsync("http://localhost:54059/values/" + selectedId);
+            if (!response.IsSuccessStatusCode)
+                MessageBox.Show($"Error: {response.StatusCode}");
 
-            using (var client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.DeleteAsync("http://localhost:54059/values/" + selectedId);
-                if (!response.IsSuccessStatusCode)
-                    MessageBox.Show($"Error: {response.StatusCode}");
-            }
             Loader();
         }
 
         private async void Button_Click_5(object sender, RoutedEventArgs e)
         {
-            using (var client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.PutAsJsonAsync("http://localhost:54059/values", _content);
-                if (!response.IsSuccessStatusCode)
-                    MessageBox.Show($"Error: {response.StatusCode}");
-            }
-
+            HttpResponseMessage response = await client.PutAsJsonAsync("http://localhost:54059/values", _content);
+            if (!response.IsSuccessStatusCode)
+                MessageBox.Show($"Error: {response.StatusCode}");
+            else
             MessageBox.Show("Everything is saved in cardDataList.json!");
 
             Loader();
@@ -178,13 +151,9 @@ namespace MyCarsWhishlist
 
         private async void DeleteAllButton_Click(object sender, RoutedEventArgs e)
         {
-
-            using (var client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.PostAsJsonAsync("http://localhost:54059/values", ToDelete);
-                if (!response.IsSuccessStatusCode)
-                    MessageBox.Show($"Error: {response.StatusCode}");
-            }
+            HttpResponseMessage response = await client.PostAsJsonAsync("http://localhost:54059/values", ToDelete);
+            if (!response.IsSuccessStatusCode)
+                MessageBox.Show($"Error: {response.StatusCode}");
 
             DeleteAllButton.Visibility = Visibility.Collapsed;
             SaveButton.Visibility = Visibility.Visible;
