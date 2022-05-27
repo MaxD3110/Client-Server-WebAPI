@@ -30,19 +30,19 @@ namespace MyCarsWhishlist
 
         private async void Loader()
         {
-                var responce = await client.GetAsync("http://localhost:54059/values");
-                responce.EnsureSuccessStatusCode();
+            var responce = await client.GetAsync("http://localhost:54059/values");
+            responce.EnsureSuccessStatusCode();
 
-                if (responce.IsSuccessStatusCode)
-                {
-                    _content = JsonConvert.DeserializeObject<BindingList<CardModel>>(await responce.Content.ReadAsStringAsync());
+            if (responce.IsSuccessStatusCode)
+            {
+                _content = JsonConvert.DeserializeObject<BindingList<CardModel>>(await responce.Content.ReadAsStringAsync());
 
-                    NewCards.ItemsSource = _content;
-                }
-                else
-                {
-                    MessageBox.Show($"Responce : {responce.StatusCode} ");
-                }
+                NewCards.ItemsSource = _content;
+            }
+            else
+            {
+                MessageBox.Show($"Responce : {responce.StatusCode} ");
+            }
         }
 
 
