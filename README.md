@@ -19,7 +19,7 @@
 
 Приложение поддерживает графические изображения формата .jpg и .png, а так же CRUD операции для карточек. 
 
-При запуске Client нужно запустить Server в VisualStudio (IIS)
+При запуске Client нужно запустить Server в VisualStudio (Server.sln)
 
 <p align="right"><a href="#top">В начало</a></p>
 
